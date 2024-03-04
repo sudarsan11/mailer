@@ -1,0 +1,32 @@
+{
+    "rules": [
+        {
+            "predicate": "any",
+            "conditions": [
+                {
+                    "field": "from",
+                    "predicate": "contains",
+                    "value": "axi"
+                },
+                {
+                    "field": "subject",
+                    "predicate": "contains",
+                    "value": "Savings"
+                },
+                {
+                    "field": "date_received_days",
+                    "predicate": "lesser_than",
+                    "value": 2
+                }
+            ]
+        }
+    ],
+    "predicate": "any",
+    "actions": [
+        {
+            "attribute": "message",
+            "name": "mark",
+            "value": "unread"
+        }
+    ]
+}
