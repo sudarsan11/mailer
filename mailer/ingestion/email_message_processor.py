@@ -12,6 +12,13 @@ logger.setLevel(logging.INFO)
 
 class GmailMessageProcessor:
     recipient = None
+    """
+    Populates message and associated tables for given list of messages
+    Arguments:
+        messages_data -> (list of dict) -> messages returned by gmail api
+    Returns: 
+        None
+    """
     @classmethod
     def process_messages(cls, messages_data):
         with transaction.atomic():
@@ -25,12 +32,26 @@ class GmailMessageProcessor:
             cls.create_user_messages(created_messages, messages_data) 
             cls.create_message_headers(created_messages, messages_data)
     
+    """
+    Initally registers the recipient for which message are processed
+    Arguments:
+        recipient_email -> (str) -> email address of the recipient
+    Returns: 
+        recipient -> (django object) -> django object of recipient
+    """
     @classmethod
     def register_recipient(cls, recipient_email):
         cls.recipient, _ = User.objects.get_or_create(email=recipient_email, username=recipient_email)
         logger.info(f"Registered recipient {cls.recipient.email}")
         return cls.recipient
 
+    """
+    From the list of messages get the list of senders and populate users table
+    Arguments:
+        messages_data -> (list of dict) -> messages returned by gmail api
+    Returns: 
+        users -> (list of django object) -> django object of users
+    """
     @classmethod
     def create_senders(cls, messages_data):
         users = set()
@@ -51,6 +72,14 @@ class GmailMessageProcessor:
         except Exception as err:
             raise err
 
+    """
+    From the list of messages get the list of senders and populate users table
+    Arguments:
+        user       -> (django object) -> django object of recipient
+        label_data -> (list of dict) -> labels returned by gmail api
+    Returns: 
+        None
+    """
     @classmethod
     def create_labels(cls, user, label_data):
         mail_labels = label_data.get('labels', [])
@@ -71,6 +100,13 @@ class GmailMessageProcessor:
         except Exception as err:
             raise err
 
+    """
+    From the list of messages get the list of messages and populate messages table
+    Arguments:
+        messages_data -> (list of dict) -> messages returned by gmail api
+    Returns: 
+        None
+    """
     @classmethod
     def create_messages(cls, messages_data):
         messages = [
@@ -90,6 +126,14 @@ class GmailMessageProcessor:
         except Exception as err:
             raise err
 
+    """
+    From the list of messages get the list of labels and associate it to messages
+    Arguments:
+        messages      -> (list of django objects) -> message objects in db
+        messages_data -> (list of dict) -> messages returned by gmail api
+    Returns: 
+        None
+    """
     @classmethod
     def create_message_labels(cls, messages, message_data):
         message_labels = []
@@ -108,6 +152,14 @@ class GmailMessageProcessor:
         except Exception as err:
             raise err
 
+    """
+    From the list of messages get the list of senders, recipents and associate it to messages
+    Arguments:
+        messages      -> (list of django objects) -> message objects in db
+        messages_data -> (list of dict) -> messages returned by gmail api
+    Returns: 
+        None
+    """
     @classmethod
     def create_user_messages(cls, messages, message_data):
         users = {'sender': []}
@@ -145,6 +197,14 @@ class GmailMessageProcessor:
         except Exception as err:
             raise err
 
+    """
+    From the list of message headers and populate message headers table
+    Arguments:
+        messages      -> (list of django objects) -> message objects in db
+        messages_data -> (list of dict) -> messages returned by gmail api
+    Returns: 
+        None
+    """
     @classmethod
     def create_message_headers(cls, messages, message_data):
         message_headers = []

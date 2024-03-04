@@ -11,15 +11,34 @@ logger = logging.getLogger('mailer.email_search')
 
 class EmailSearch:
 
+    """
+    Initalize search service for resource based on provided rules
+    Arguments:
+        resource_type -> (str)     -> Resource like message 
+        rules_data    -> (RuleSet) -> Rules to filter
+    Returns: 
+        resource_ids -> (list) -> List of resource ids filtered by rules
+    """
     @classmethod
     def fetch(cls, resource_type, rules_data):
         if resource_type == 'message':
             rules, rules_predicate = rules_data.rules, rules_data.predicate
             messages = cls.fetch_message_by_header(rules, rules_predicate)
+            if not messages or len(messages) == 0:
+                raise Exception('No messages found matching rules')
             return list(messages)
         else:
             raise Exception('Invalid resource type')
 
+    """
+    Helper to construct query given a column, operator and value
+    Arguments:
+        column_name -> (str) -> The db table column name
+        operator    -> (str) -> The operator to use for query
+        value       -> (str) -> The value to use for query
+    Returns: 
+        query_object -> (django Q)
+    """
     @staticmethod
     def get_query(column_name, operator, value):
         field_lookup = f"{column_name}__"
@@ -37,7 +56,14 @@ class EmailSearch:
             return Q(**{f"{field_lookup}gte": value})
         else:
             return Q()
-        
+
+    """
+    Given a field name in condition, returns the column and value to query on
+    Arguments:
+        field -> (str) -> The field name in the condition
+    Returns: 
+        query_object -> (tuple) -> Has the column name and value
+    """
     @staticmethod
     def get_header_name(field):
         if field == 'from':
@@ -48,18 +74,41 @@ class EmailSearch:
             return ('header', 'Subject')
         else:
             return (None, None)
-        
+
+    """
+    Given a field value in condition, returns the column and value to query on
+    Arguments:
+        field -> (str) -> The field name in the condition
+    Returns: 
+        query_object -> (tuple) -> Has the column name and value
+    """
     @staticmethod
     def get_header_value(value):
         return ('value', value)
-        
+
+    """
+    In case if query must be performed on message table returns the column and value to query on
+    Arguments:
+        field -> (str) -> The field name in the condition
+        value -> (str) -> The value in the condition
+    Returns: 
+        query_object -> (tuple) -> Has the column name and value
+    """
     @staticmethod
     def get_message_condition_column(field, value):
         if field == 'date_received_days':
             return ('message_id__internal_date', datetime.datetime.utcnow() - datetime.timedelta(days=value))
         elif field == 'date_received_months':
             return ('message_id__internal_date', datetime.datetime.utcnow() - datetime.timedelta(days=30*value))
-        
+
+    """
+    Takes a list of conditions and construct query
+    Arguments:
+        conditions -> (Rule.conditions) -> List of conditions read from user input
+    Returns: 
+        message_query -> (django queryset) -> Has the queryset related to message table
+        header_query  -> (django queryset) -> Has the queryset related to message header table
+    """
     @classmethod
     def construct_query(cls, conditions):        
         # We need to build a filter like this
@@ -99,7 +148,15 @@ class EmailSearch:
 
         logger.info(f"Constructing message and header queries for conditions")
         return message_query, header_query
-
+    
+    """
+    Takes a list of conditions and construct query
+    Arguments:
+        rules -> (RuleSet) -> List of rules read from user input
+        rule_predicate -> (RuleSet.predicate) -> Predicate for list of rules
+    Returns: 
+        queryset -> (django queryset) -> Has the message ids filtered based on rules
+    """
     @classmethod
     def fetch_message_by_header(cls, rules, rule_predicate):      
         message_headers_queryset = MessageHeaderValues.objects.all()

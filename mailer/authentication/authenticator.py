@@ -11,6 +11,16 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 class GoogleAuthenticator():
 
+    """
+    Method to fetch access token using refresh token if it expires
+    and saves it to credentials.json
+
+    Arguments:
+        credentials (dict) -> google credentials object
+        SCOPES      (list) -> Scope of the gmail service (read only, write only etc)
+    Returns: 
+        None
+    """
     @staticmethod
     def refresh_token(credentials, SCOPES):
         logger.info("Refreshing credentials")
@@ -24,6 +34,15 @@ class GoogleAuthenticator():
         with open("token.json", "w") as token:
             token.write(credentials.to_json())
 
+    """
+    Alternative constructor for reading credentials from json file
+    Arguments:
+        file_path    (str) -> local file path to credentials file
+        service_name (str) -> google service name
+        version      (str) -> api version to use
+    Returns: 
+        service_object () -> gmail service object
+    """
     @classmethod
     def from_file(cls, file_path, service_name='gmail', version='v1'):
         
@@ -32,12 +51,30 @@ class GoogleAuthenticator():
             cls.refresh_token(credentials, cls.SCOPES)
 
         return cls.init_service(credentials, service_name, version)
-
+    
+    """
+    Alternative constructor for reading credentials from cli
+    Arguments:
+        config       (dict) -> dict of credentials with token, refresh token, expiry etc
+        service_name (str)  -> google service name
+        version      (str)  -> api version to use
+    Returns: 
+        service_object () -> gmail service object
+    """
     @classmethod
     def from_config(cls, config, service_name='gmail', version='v1'):
         credentials = Credentials.from_authorized_user_info(info=config)
         return cls.init_service(credentials, service_name, version)
 
+    """
+    Initialize and return service object using credentials
+    Arguments:
+        credentials  (dict) -> dict of credentials with token, refresh token, expiry etc
+        service_name (str)  -> google service name
+        version      (str)  -> api version to use
+    Returns: 
+        service_object () -> gmail service object
+    """
     @classmethod
     def init_service(cls, credentials, service_name, version):
         try:

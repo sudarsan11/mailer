@@ -15,13 +15,30 @@ class IngestionFilters(BaseModel):
     max_results: int = Field(default=10)
 
 class GmailFetcher:
+    """
+    Initialize gmail fetcher using service object
+    Arguments:
+        gmail_service      ()    -> gmail service object
+        user_email         (str) -> user email for which emails will be fetched
+        ingestion_interval (IngestionInterval) -> start and end date
+        ingestion_filters  (IngestionFilters)  -> filters for fetching emails
+    Returns: 
+        None
+    """
     def __init__(self, gmail_service, user_email=None, ingestion_interval=None, ingestion_filters=None):
         self.gmail_service = gmail_service
         self.user_email = user_email
         self.ingestion_interval = ingestion_interval or IngestionInterval()
         self.ingestion_filters = ingestion_filters or IngestionFilters()
         self.resources = []
-    
+
+    """
+    To fetch system and user labels before fetching messages
+    Arguments:
+        None
+    Returns: 
+        labels -> (list of dict) -> Email message labels created by system and user
+    """
     def fetch_labels(self):
         try:
             labels = self.gmail_service.users().labels().list(
@@ -32,6 +49,13 @@ class GmailFetcher:
         except HttpError as error:
             logger.error(f"Failed to fetch labels: {error}")
 
+    """
+    To construct filters for fetching messages
+    Arguments:
+        None
+    Returns: 
+        query_params -> (str) -> Space separated query params for fetching messages
+    """
     def construct_message_filters(self):
         query_params = []
         query_param_map = {
@@ -44,12 +68,28 @@ class GmailFetcher:
 
         return " ".join(query_params)
     
+    """
+    Google's batch request requires a callback function
+    Arguments:
+        request_id -> () -> request id for the resource in the batch for which the callback is invoked
+        response   -> () -> response in for the resource the batch for which the callback is invoked
+        exception  -> () -> exceptions if any
+    Returns: 
+        None
+    """
     def batch_request_callback(self, request_id, response, exception):
         if exception:
             logger.error(f"Failed to fetch resource : {request_id} {exception}")
         
         self.resources.append(response)
 
+    """
+    Construct a batch request for messages and executes them
+    Arguments:
+        message_ids -> (list) -> message ids fetched during list messages
+    Returns: 
+        None
+    """
     def get_message_in_batch(self, message_ids):
         batch_request = self.gmail_service.new_batch_http_request()
         logger.info("Fetching messages in batch from gmail api, please wait....")
@@ -63,6 +103,13 @@ class GmailFetcher:
             )                
         batch_request.execute()
         
+    """
+    Generator function which fetches paginated results of messages, it has only message and thread ids
+    Arguments:
+        None
+    Returns: 
+        resources -> (list) -> yields list of paginated resources
+    """
     def fetch_messages(self):
         next_page_token = None
         page_num = 1

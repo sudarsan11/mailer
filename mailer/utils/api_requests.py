@@ -1,6 +1,9 @@
 import requests
 import curlify
 import json
+import logging
+
+logger = logging.getLogger('utils.api_request')
 
 def json_decoder(response):
     try:
@@ -17,7 +20,7 @@ class APIRequest:
         url = f"{self.base_url}/{endpoint}"
         response = requests.get(url, params=params, headers=headers)
         response.raise_for_status()
-        print(curlify.to_curl(response.request))
+        logger.info(curlify.to_curl(response.request))
         return json_decoder(response)
 
     def post(self, endpoint=None, data=None, json=None, headers=None):
@@ -26,7 +29,7 @@ class APIRequest:
             url = f"{self.base_url}/{endpoint}"
         
         response = requests.post(url, data=data, json=json, headers=headers)
-        print(curlify.to_curl(response.request)) # remove print statement
+        logger.info(curlify.to_curl(response.request)) # remove print statement
         response.raise_for_status()
         return json_decoder(response)
 
@@ -34,13 +37,12 @@ class APIRequest:
         url = f"{self.base_url}/{endpoint}"
         response = requests.put(url, data=data, json=json, headers=headers)
         response.raise_for_status()
-        print(curlify.to_curl(response.request))
+        logger.info(curlify.to_curl(response.request))
         return json_decoder(response)
 
     def delete(self, endpoint=None, headers=None):
         url = f"{self.base_url}/{endpoint}"
         response = requests.delete(url, headers=headers)
         response.raise_for_status()
-        print(curlify.to_curl(response.request))
+        logger.info(curlify.to_curl(response.request))
         return json_decoder(response)
-
