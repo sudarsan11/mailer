@@ -41,3 +41,5 @@ class MessageHeaderValues(models.Model):
     header = models.CharField(max_length=100)
     value = models.TextField()
 
+    class Meta:
+        unique_together = ('message_id', 'header', 'value',)

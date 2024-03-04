@@ -154,7 +154,7 @@ class GmailMessageProcessor:
                     MessageHeaderValues(message_id=message_obj, header=header['name'], value=header['value'])
                 )
         try:
-            MessageHeaderValues.objects.bulk_create(message_headers)
+            MessageHeaderValues.objects.bulk_create(message_headers, ignore_conflicts=True)
             logger.info(f"Populated message headers table for {cls.recipient.email}")
         except Exception as err:
             raise err
