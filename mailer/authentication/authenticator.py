@@ -36,10 +36,6 @@ class GoogleAuthenticator():
     @classmethod
     def from_config(cls, config, service_name='gmail', version='v1'):
         credentials = Credentials.from_authorized_user_info(info=config)
-
-        if not credentials or not credentials.valid:
-            cls.refresh_token(credentials, cls.SCOPES)
-
         return cls.init_service(credentials, service_name, version)
 
     @classmethod

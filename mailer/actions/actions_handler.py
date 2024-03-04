@@ -2,7 +2,7 @@
 
 import json
 import logging
-from mailer.lib.api_requests import APIRequest
+from mailer.utils.api_requests import APIRequest
 from requests.exceptions import HTTPError
 
 logger = logging.getLogger('mailer.actions_handler')
